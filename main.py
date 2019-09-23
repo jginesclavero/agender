@@ -16,7 +16,7 @@ height = 340
 face_detector_kind = 'haar'
 
 # Choose what age and gender model to use. Specify 'ssrnet' or 'net'
-age_gender_kind = 'ssrnet'
+age_gender_kind = 'net'
 
 # Diagonal and line thickness are computed at run-time
 diagonal, line_thickness = None, None
@@ -87,12 +87,12 @@ def calculateParameters(height_orig, width_orig):
     fourcc = cv.VideoWriter_fourcc(*'XVID')
     out = cv.VideoWriter('video.avi', fourcc=fourcc, fps=fps, frameSize=(width, height))
 
-    
+
 def findFaces(img, confidence_threshold=0.7):
     # Get original width and height
     height = img.shape[0]
     width = img.shape[1]
-    
+
     face_boxes = []
 
     if (face_detector_kind == 'haar'):
@@ -100,7 +100,7 @@ def findFaces(img, confidence_threshold=0.7):
         gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
         # Detect faces
         detections = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5)
-        
+
         for (x, y, w, h) in detections:
             padding_h = int(math.floor(0.5 + h * face_padding_ratio))
             padding_w = int(math.floor(0.5 + w * face_padding_ratio))
@@ -110,11 +110,11 @@ def findFaces(img, confidence_threshold=0.7):
     else:
         # Convert input image to 3x300x300, as NN model expects only 300x300 RGB images
         blob = cv.dnn.blobFromImage(img, 1.0, (300, 300), mean=(104, 117, 123), swapRB=True, crop=False)
-    
+
         # Pass blob through model and get detected faces
         face_net.setInput(blob)
         detections = face_net.forward()
-        
+
         for i in range(detections.shape[2]):
             confidence = detections[0, 0, i, 2]
             if (confidence < confidence_threshold):
@@ -190,13 +190,13 @@ while cap.isOpened():
     if (diagonal is None):
         height_orig, width_orig = frame.shape[0:2]
         calculateParameters(height_orig, width_orig)
-        
+
     # Resize, Convert BGR to HSV
     if ((height, width) != frame.shape[0:2]):
         frame_bgr = cv.resize(frame, dsize=(width, height), fx=0, fy=0)
     else:
         frame_bgr = frame
-        
+
     # Detect faces
     face_boxes = findFaces(frame_bgr)
 
@@ -207,13 +207,13 @@ while cap.isOpened():
         # Draw boxes in faces_bgr image
         for (x1, y1, x2, y2) in face_boxes:
             cv.rectangle(faces_bgr, (x1, y1), (x2, y2), color=(0, 255, 0), thickness=line_thickness, lineType=8)
-        
+
         # Collect all faces into matrix
         faces = collectFaces(frame, face_boxes)
-    
+
         # Get age and gender
         labels = predictAgeGender(faces)
-        
+
         # Draw labels
         for (label, box) in zip(labels, face_boxes):
             cv.putText(faces_bgr, label, org=(box[0], box[1] - 10), fontFace=cv.FONT_HERSHEY_PLAIN,
@@ -222,10 +222,10 @@ while cap.isOpened():
     # Show frames
     cv.imshow('Source', frame_bgr)
     cv.imshow('Faces', faces_bgr)
-    
+
     # Write output frame
     out.write(faces_bgr)
-    
+
     # Quit on ESC button, pause on SPACE
     key = (cv.waitKey(1 if (not paused) else 0) & 0xFF)
     if (key == 27):
@@ -233,7 +233,7 @@ while cap.isOpened():
     elif (key == 32):
         paused = (not paused)
     sleep(0.001)
-    
+
 cap.release()
 out.release()
 cv.destroyAllWindows()
