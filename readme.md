@@ -14,6 +14,8 @@ This is a small demo project to try and test **OpenCV** library
 and also implement on-the-fly **face detection, age and gender estimation
 using pre-trained models**.
 
+**Support for emotion recognition added. Source https://github.com/omar178/Emotion-recognition**
+
 This article can also be found on [medium](https://medium.com/@pavelchernov/age-and-gender-estimation-open-source-projects-overview-simple-project-from-scratch-69581831297e).
 
 ![](img/output1.gif)
@@ -60,13 +62,13 @@ by Kinar Ravishankar.
     - Framework: `Keras/TensorFlow`
     - Input: RGB images of any size, author used: `224x224x3`
     - Output:
-      - _gender_: two binary classes: Male and Female, choose maximum. 
+      - _gender_: two binary classes: Male and Female, choose maximum.
       - _age_: 21 class, use softmax, choose maximum and multiply it's index by 4.76,
         which gives you roughly [0 - 100] years interval.
     - Model weights size: we can estimate it as this model is based on `MobileNet_v1_224`,
     followed by one `Dense(1024->1024)` layer plus two output `Dense(1024->1)` layers.
     So there are approximately (4.24 MP + 1.05 MP) = 5.29 MP (=Million Parameters).
-    Which is about **21 Mb** for `float32`. 
+    Which is about **21 Mb** for `float32`.
     - Pre-trained model available: **NO**
 
 1. [**How to build an age and gender multi-task predictor with deep learning in TensorFlow**](https://medium.freecodecamp.org/how-to-build-an-age-and-gender-multi-task-predictor-with-deep-learning-in-tensorflow-20c28a1bd447)
@@ -76,7 +78,7 @@ by Cole Murray
     - Framework: `TensorFlow`
     - Input: RGB images`224x224x3`
     - Output:
-      - _gender_: two binary classes: Male and Female, choose maximum. 
+      - _gender_: two binary classes: Male and Female, choose maximum.
       - _age_: vector of 101 classes probabilities for ages [0..100], choose maximum or use weighted sum
     - Model weights size: we can estimate it from model architecture:
       `Conv(5x5, 3->32)` -> `MaxPool(2->1)` -> `Conv(5x5, 32->64)` -> `MaxPool(2->1)` ->
@@ -138,7 +140,7 @@ by Gil Levi and Tal Hassner.
     - Framework: `Caffe`. But models could be loaded with `OpenCV`.
     - Input: `256x256x3`
     - Output:
-      - _gender_: two binary classes: Male and Female, choose maximum. 
+      - _gender_: two binary classes: Male and Female, choose maximum.
       - _age_: 8 classes: [0..2], [4..6], [8..12], [15..20], [25..32], [38..43], [48..53], [60..100],
         use softmax, choose maximum.
     - Model weights size:
@@ -157,7 +159,7 @@ by Rude Carnie (? Daniel Pressel)
       - _gender_: two binary classes: Male and Female, choose maximum.
       - _age_: 8 classes: [0..2], [4..6], [8..12], [15..20], [25..32], [38..43], [48..53], [60..100],
         use softmax, choose maximum.
-    - Model weights size: 
+    - Model weights size:
       - _gender_: inception_v3 based model - **166 Mb**,
       - _age_: inception_v3 based model - **166 Mb**.
     - Pre-trained model available: **YES**, separate networks for _gender_ and _age_.
@@ -237,15 +239,15 @@ No | Name | Article | Source | License | Framework | Input | Output | Size | Pre
 ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- |
 1 | MobileNets by Kinar Ravishankar | [link](https://medium.com/ymedialabs-innovation/estimating-age-and-gender-with-mobilenets-13eaee1e819c) | [link](https://github.com/KinarR/age-gender-estimator-keras) | MIT | Keras/TensorFlow | 224x224x3 | gender: 2 classes, age: 21 classes | **~21Mb** | **NO** |
 2 | ConvNet by Cole Murray | [link](https://medium.freecodecamp.org/how-to-build-an-age-and-gender-multi-task-predictor-with-deep-learning-in-tensorflow-20c28a1bd447) | [link](https://github.com/ColeMurray/age-gender-estimation-tutorial) | unspecified | TensorFlow | 224x224x3 | gender: 2 classes, age: 101 classes | **~393Mb** | **NO** |
-3 | ResNet50 by Youness Mansar | [link](https://medium.com/@CVxTz/predicting-apparent-age-and-gender-from-face-picture-keras-tensorflow-a99413d8fd5e) | [link](https://github.com/CVxTz/face_age_gender) | MIT | Keras/TensorFlow | 224x224x3 | gender: one number, age: 8 classes | **~100Mb** | **NO** | 
+3 | ResNet50 by Youness Mansar | [link](https://medium.com/@CVxTz/predicting-apparent-age-and-gender-from-face-picture-keras-tensorflow-a99413d8fd5e) | [link](https://github.com/CVxTz/face_age_gender) | MIT | Keras/TensorFlow | 224x224x3 | gender: one number, age: 8 classes | **~100Mb** | **NO** |
 **4** | SSR-Net (original) | [link](https://github.com/shamangary/SSR-Net/blob/master/ijcai18_ssrnet_pdfa_2b.pdf) | [link](https://github.com/shamangary/SSR-Net/) | Apache License 2.0 | Keras/TensorFlow | 64x64x3 | gender: one number, age: one number | **0.32Mb** | **YES** |
 5 | SSR-Net on MXNET | None | [link](https://github.com/wayen820/gender_age_estimation_mxnet) | unspecified | MXNET | 112x112x3 | gender: one number, age: one number | **1.95Mb**, **3.94Mb** | **YES** |
-**6** | ConvNet by Gil Levi and Tal Hassner | [link](https://talhassner.github.io/home/publication/2015_CVPR) | [link](https://github.com/GilLevi/AgeGenderDeepLearning) | as is | Caffe | 256x256x3 | gender: 2 classses, age: 8 classes | **43.5Mb**, **43.5Mb** | **YES** | 
+**6** | ConvNet by Gil Levi and Tal Hassner | [link](https://talhassner.github.io/home/publication/2015_CVPR) | [link](https://github.com/GilLevi/AgeGenderDeepLearning) | as is | Caffe | 256x256x3 | gender: 2 classses, age: 8 classes | **43.5Mb**, **43.5Mb** | **YES** |
 7 | Inception_v3 by Rude Carnie | None | [link](https://github.com/dpressel/rude-carnie) | unspecified | TensorFlow | 256x256x3 | gender: 2 classses, age: 8 classes | **166Mb**, **166Mb** | **YES** |
 8 | ConvNet by Chengwei Zhang | [link](https://www.dlology.com/blog/easy-real-time-gender-age-prediction-from-webcam-video-with-keras/) | [link](https://github.com/Tony607/Keras_age_gender) | unspecified | Keras/TensorFlow | 64x64x3 | gender: 1 number, age: 101 class | **186Mb** | **YES** |
 9 | ConvNet by Yusuke Uchida | None | [link](https://github.com/yu4u/age-gender-estimation) | MIT | Keras/TensorFlow | 32x32x3 | gender: 1 number, age: 101 class | **187Mb** | **YES** |
 10 | ConvNet by Boyuan Jiang | None | [link](https://github.com/BoyuanJiang/Age-Gender-Estimate-TF) | MIT | TensorFlow | 160x160x3 | gender: one number, age: one number | **246.5Mb** | **YES** |
-11 | ConvNet by Sefik Ilkin Serengil | [link](https://sefiks.com/2019/02/13/apparent-age-and-gender-prediction-in-keras/) | [link](https://github.com/serengil/tensorflow-101/blob/master/python/age-gender-prediction-real-time.py) | unspecified | Keras/TensorFlow | 224x224x3 | gender: 1 number, age: 101 class | **553Mb**, **514Mb** | **YES** | 
+11 | ConvNet by Sefik Ilkin Serengil | [link](https://sefiks.com/2019/02/13/apparent-age-and-gender-prediction-in-keras/) | [link](https://github.com/serengil/tensorflow-101/blob/master/python/age-gender-prediction-real-time.py) | unspecified | Keras/TensorFlow | 224x224x3 | gender: 1 number, age: 101 class | **553Mb**, **514Mb** | **YES** |
 12 | ConvNet by Sanjaya Subedi | [link](https://sanjayasubedi.com.np/deeplearning/multioutput-keras/) | [link](https://github.com/jangedoo/age-gender-race-prediction) | unspecified | Keras/TensorFlow | 198x198x3 | gender: 1 number, age: 1 number, race: 5 classes | unknown | **NO** |
 
 > Note: I did not include model's accuracy provided by authors in the description
@@ -266,7 +268,7 @@ that are widely used by developers as they are about **43 Mb**.
 
 Of course I would like to have one neural net for both gender and age estimation.
 Maybe I will spend some time and train a model by myself.
-In this case I would definitely use staged training technique proposed by SSR-Net authors. 
+In this case I would definitely use staged training technique proposed by SSR-Net authors.
 
 ## This Project Architecture
 
@@ -370,7 +372,7 @@ def findFaces(img, confidence_threshold=0.7):
     # Get original width and height
     height = img.shape[0]
     width = img.shape[1]
-    
+
     face_boxes = []
 
     if (face_detector_kind == 'haar'):
@@ -378,7 +380,7 @@ def findFaces(img, confidence_threshold=0.7):
         gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
         # Detect faces
         detections = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5)
-        
+
         for (x, y, w, h) in detections:
             padding_h = int(math.floor(0.5 + h * face_padding_ratio))
             padding_w = int(math.floor(0.5 + w * face_padding_ratio))
@@ -388,11 +390,11 @@ def findFaces(img, confidence_threshold=0.7):
     else:
         # Convert input image to 3x300x300, as NN model expects only 300x300 RGB images
         blob = cv.dnn.blobFromImage(img, 1.0, (300, 300), mean=(104, 117, 123), swapRB=True, crop=False)
-    
+
         # Pass blob through model and get detected faces
         face_net.setInput(blob)
         detections = face_net.forward()
-        
+
         for i in range(detections.shape[2]):
             confidence = detections[0, 0, i, 2]
             if (confidence < confidence_threshold):
@@ -412,7 +414,7 @@ def findFaces(img, confidence_threshold=0.7):
 
 Please note the global variable `face_padding_ratio` which determines how to enlarge face_box detected by any algorithm.
 It's value depends on the face detection algorithm and on age/gender estimation algorithm.
-Ideally, you should choose it's value so that faces you get will be very similar to those that model was trained on. 
+Ideally, you should choose it's value so that faces you get will be very similar to those that model was trained on.
 
 ### Extracting faces patches
 
@@ -560,13 +562,13 @@ A typical content analyzing pipeline consists of several modules running in sequ
 For instance, in this simple project we have:
 
 1. `Input frame` -> `ConvNet to detect faces` -> `faces`
-2. `faces` -> `ConvNet to estimage gender` -> `genders` 
-3. `faces` -> `ConvNet to estimage age` -> `ages` 
+2. `faces` -> `ConvNet to estimage gender` -> `genders`
+3. `faces` -> `ConvNet to estimage age` -> `ages`
 
 Where 2 and 3 may run in parallel.
 
 In more sophisticated projects we could also find:
-- `Input frame` -> `ConvNet to recognize common objects` -> `COCO names` 
+- `Input frame` -> `ConvNet to recognize common objects` -> `COCO names`
 - `Input frame` -> `ConvNet for semantic segmentation` -> `segmented image mask`
 
 Note that each `ConvNet` typically consists of many sequential layers.
