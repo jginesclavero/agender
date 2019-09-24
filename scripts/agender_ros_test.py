@@ -22,6 +22,9 @@ import keras
 from keras.models import load_model
 from keras.preprocessing.image import img_to_array
 
+import glob
+import face_recognition as fr
+
 class agender_ros:
 
   def __init__(self):
@@ -30,8 +33,10 @@ class agender_ros:
     self.bridge = CvBridge()
     self.rospack = rospkg.RosPack()
     self.models_path = self.rospack.get_path('agender_ros') + '/models/'
+    self.people_path = self.rospack.get_path('agender_ros') + '/people/'
     self.image_sub = rospy.Subscriber("/camera/rgb/image_raw",Image,self.callback)
     self.image_pub = rospy.Publisher("/faces", Image, queue_size=1)
+    self.database = self.initialize_database()
     self.init_nn()
 
   def callback(self,data):
@@ -40,6 +45,28 @@ class agender_ros:
       self.step(cv_image)
     except CvBridgeError as e:
       print(e)
+
+  def initialize_database(self):
+    """
+    Reads the PNG images from ./people folder and creates a list of peoples
+    The names of the image files are considered as their real names.
+    For example;
+    /people
+      - mario.png
+      - jennifer.png
+      - melanie.png
+    Returns:
+    (tuple) (people_list, name_list) (features of people, names of people)
+    """
+    filenames = glob.glob(self.people_path + '*.png')
+    people_list = []
+    name_list = []
+    for f in filenames:
+      im = cv.imread(f, 1)
+      im = im.astype(np.uint8)
+      people_list.append(fr.face_encodings(im)[0])
+      name_list.append(f.split('/')[-1].split('.')[0])
+    return (people_list, name_list)
 
   def init_nn(self):
     # Desired width and height to process video.
@@ -186,6 +213,16 @@ class agender_ros:
     emotion_probability = np.max(preds)
     return self.emotions[preds.argmax()]
 
+  def recognizer(self,face):
+    face_locations = fr.face_locations(face)
+    face_features = fr.face_encodings(face, face_locations)
+    label = "Unknown"
+    for features, (top, right, bottom, left) in zip(face_features, face_locations):
+      matches = fr.compare_faces(self.database[0], features)
+      if True in matches:
+        ind = matches.index(True)
+        label = self.database[1][ind]
+    return label
 
   def predictAgeGenderEmotion(self, faces):
     labels = []
@@ -198,9 +235,15 @@ class agender_ros:
         # Predict gender and age
         genders = self.gender_net.predict(blob)
         ages = self.age_net.predict(blob)
-        emotion = self.predictEmotion(face_bgr);
+        emotion = self.predictEmotion(face_bgr)
+        recognition = self.recognizer(face_bgr)
         #  Construct labels with emotion
-        labels = ['{},{},{}'.format('Male' if (gender >= 0.5) else 'Female', int(age), emotion) for (gender, age) in zip(genders, ages)]
+        labels = ['{},{},{},{}'.format(
+            recognition,
+            'Male' if (gender >= 0.5) else 'Female',
+            int(age),
+            emotion)
+          for (gender, age) in zip(genders, ages)]
         #  Construct labels
         #labels = ['{},{}'.format('Male' if (gender >= 0.5) else 'Female', int(age)) for (gender, age) in zip(genders, ages)]
     else:
@@ -214,8 +257,9 @@ class agender_ros:
       self.age_net.setInput(blob)
       ages = self.age_net.forward()
       emotion = self.predictEmotion(face_bgr);
+      recognition = self.recognizer(faces_bgr)
       #  Construct labels
-      labels = ['{},{},{}'.format(self.Genders[gender.argmax()], self.Ages[age.argmax()], emotion) for (gender, age) in zip(genders, ages)]
+      labels = ['{},{},{},{}'.format(recognition, self.Genders[gender.argmax()], self.Ages[age.argmax()], emotion) for (gender, age) in zip(genders, ages)]
     return labels
 
   def step(self, frame):
