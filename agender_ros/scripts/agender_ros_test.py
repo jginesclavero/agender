@@ -35,7 +35,7 @@ class agender_ros:
     self.rospack = rospkg.RosPack()
     self.models_path = self.rospack.get_path('agender_ros') + '/models/'
     self.people_path = self.rospack.get_path('agender_ros') + '/people/'
-    self.image_sub = rospy.Subscriber("/camera/rgb/image_raw",Image,self.callback)
+    self.image_sub = rospy.Subscriber("/xtion/rgb/image_raw",Image,self.callback)
     self.image_pub = rospy.Publisher("/faces", Image, queue_size=1)
     self.descriptors_pub = rospy.Publisher("/agender_ros/people_descriptors", PeopleDescriptors, queue_size=1)
     self.database = self.initialize_database()
@@ -76,6 +76,8 @@ class agender_ros:
     # as smaller size significantly speeds up processing almost without affecting quality.
     self.width = 480
     self.height = 340
+    self.resize_width_rate = 0.0
+    self.resize_height_rate = 0.0
 
     # Choose which face detector to use. Select 'haar' or 'net'
     self.face_detector_kind = 'haar'
@@ -213,7 +215,7 @@ class agender_ros:
     roi = np.expand_dims(roi, axis=0)
     preds = self.emotion_model.predict(roi)[0]
     emotion_probability = np.max(preds)
-    return (self.emotions[preds.argmax()], preds.argmax())
+    return (self.emotions[preds.argmax()], preds.argmax(), emotion_probability)
 
   def recognizer(self,face):
     face_locations = fr.face_locations(face)
@@ -238,10 +240,10 @@ class agender_ros:
     descriptor_msg.age = int(age)
     descriptor_msg.emotion = emotion
     descriptor_msg.name = recognition
-    descriptor_msg.face_xmin = face_box[0]
-    descriptor_msg.face_ymin = face_box[1]
-    descriptor_msg.face_xmax = face_box[2]
-    descriptor_msg.face_ymax = face_box[3]
+    descriptor_msg.face_xmin = int(face_box[0] * self.resize_width_rate)
+    descriptor_msg.face_ymin = int(face_box[1] * self.resize_height_rate)
+    descriptor_msg.face_xmax = int(face_box[2] * self.resize_width_rate)
+    descriptor_msg.face_ymax = int(face_box[3] * self.resize_height_rate)
 
     return descriptor_msg
 
@@ -249,6 +251,7 @@ class agender_ros:
     labels = []
     descriptor_list = []
     # Collect all faces into matrix
+    recognition = "Unknown"
     faces = self.collectFaces(frame, face_boxes)
     if (self.age_gender_kind == 'ssrnet'):
       # Convert faces to N,64,64,3 blob
@@ -260,9 +263,12 @@ class agender_ros:
         genders = self.gender_net.predict(blob)
         ages = self.age_net.predict(blob)
 
-        emotion, emotion_index = self.predictEmotion(face_bgr)
-        recognition = self.recognizer(face_bgr)
-        descriptor = self.descriptors2Msg(genders[0], ages[0], emotion_index, recognition, face_boxes[i])
+        emotion, emotion_index, accuracy = self.predictEmotion(face_bgr)
+        #recognition = self.recognizer(face_bgr)
+        if (accuracy < 0.4):
+            descriptor = self.descriptors2Msg(genders[0], ages[0], 0, recognition, face_boxes[i])
+        else:
+            descriptor = self.descriptors2Msg(genders[0], ages[0], emotion_index + 1, recognition, face_boxes[i])
         descriptor_list.append(descriptor)
         #  Construct labels
         labels = ['{},{},{},{}'.format(
@@ -284,7 +290,7 @@ class agender_ros:
       self.age_net.setInput(blob)
       ages = self.age_net.forward()
       emotion, emotion_index = self.predictEmotion(face_bgr);
-      recognition = self.recognizer(faces_bgr)
+      #recognition = self.recognizer(faces_bgr)
       # descriptor = self.descriptors2Msg(genders[0], ages[0], emotion_index, recognition, face_boxes[i])
       # descriptor_list.append(descriptor)
       #  Construct labels
@@ -293,6 +299,9 @@ class agender_ros:
 
   def step(self, frame):
     # Calculate parameters if not yet
+    raw_height, raw_width, raw_channels = frame.shape
+    self.resize_height_rate = float(raw_height) / float(self.height)
+    self.resize_width_rate = float(raw_width) / float(self.width)
     if (self.diagonal is None):
       self.height_orig, self.width_orig = frame.shape[0:2]
       self.calculateParameters(self.height_orig, self.width_orig)
@@ -307,13 +316,27 @@ class agender_ros:
     faces_bgr = frame_bgr.copy()
 
     if (len(face_boxes) > 0):
-      # Draw boxes in faces_bgr image
-      for (x1, y1, x2, y2) in face_boxes:
-        cv.rectangle(faces_bgr, (x1, y1), (x2, y2), color=(0, 255, 0), thickness=self.line_thickness, lineType=8)
-
       # Get age and gender
       labels, descriptors = self.predictAgeGenderEmotion(frame, face_boxes)
+      for desc in descriptors:
+          color = []
+          if ((desc.emotion == 4) or (desc.emotion == 6)):
+            color = (0, 255, 0)
+          elif (desc.emotion == 0 or desc.emotion == 7):
+            color = (128, 128, 128)
+          else:
+            color = (0, 0, 255)
 
+          cv.rectangle(
+           faces_bgr,
+           (int(desc.face_xmin / self.resize_width_rate), int(desc.face_ymin / self.resize_height_rate)),
+           (int(desc.face_xmax / self.resize_width_rate), int(desc.face_ymax / self.resize_height_rate)),
+           color,
+           thickness=self.line_thickness,
+           lineType=8)
+      # Draw boxes in faces_bgr image
+      #for (x1, y1, x2, y2) in face_boxes:
+     #    cv.rectangle(faces_bgr, (x1, y1), (x2, y2), color=(0, 255, 0), thickness=self.line_thickness, lineType=8)
 
       msg = PeopleDescriptors()
       msg.people_descriptors = descriptors
